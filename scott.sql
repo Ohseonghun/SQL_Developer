@@ -121,7 +121,7 @@ select to_char(sysdate,'YYYY/MM/DD HH24:MI:SS') from dual;
 -- MSSQL 디폴트 값 추가방법
 --ALTER TABLE [테이블명] ADD CONSTRAINT [제약조건명] DEFAULT [값] FOR [컬럼명];
 
---- 최종 ----
+--- 최종 연습----
 
 CREATE TABLE e_sports
 (
@@ -136,7 +136,7 @@ MVP횟수          number(2),
 );
 
 INSERT INTO Premier_League VALUES(1, SKT, '페이커', '미드', 10, 2020 );
-d
+
 drop table e_sports;
 
 desc e_sports;
