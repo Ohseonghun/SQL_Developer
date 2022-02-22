@@ -112,33 +112,152 @@ select * from Premier_League where 부상여부= 'y';
 --부상여부  Y or N 으로 출력
 select 번호,이름,nvl(부상여부,'n') from Premier_League;
 
-select * from Premier_Leagu where 이름 like '%손%'		
+select * from Premier_League; where 이름 like '%손%'		
 union		
-select * from Premier_Leagu where 이름 like '%로%';	
+select * from Premier_League; where 이름 like '%로%';	
 
 select sysdate from dual;
 select to_char(sysdate,'YYYY/MM/DD HH24:MI:SS') from dual;
 -- MSSQL 디폴트 값 추가방법
 --ALTER TABLE [테이블명] ADD CONSTRAINT [제약조건명] DEFAULT [값] FOR [컬럼명];
 
---- 최종 연습----
+select 
+sum (weeklywage), -- 지정한 열의 갑을 모두 더함
+count (weeklywage), --항목의 데이터 개수를 출력
+max (weeklywage), --행의 항목들 중 최대값 출력
+min (weeklywage), --행의 항목들 중 최소값 출력
+avg (weeklywage) --행의 평균 값을 출력
+from Premier_League;
 
-CREATE TABLE e_sports
-(
-id              number(4) PRIMARY KEY,
-팀               varchar2(50),
-이름             varchar2(50),     
-포지션            varchar2(50),
-MVP횟수          number(2),
-연봉              number(10),
-다음경기            date,
-출전가능           char(1)          DEFAULT 'y'
+
+select sum (weeklywage) from Premier_League where 포지션 '공격수';
+
+
+
+-- 중복 제거--
+
+select 
+sum(distinct weeklywage), 
+count(distinct weeklywage), 
+max(weeklywage), 
+min(weeklywage), 
+round(avg(distinct weeklywage))
+from Premier_League;
+
+select sum(distinct weeklywage) from Premier_League;
+
+--시간 출력--
+SELECT 
+TO_CHAR(SYSDATE, 'YYYY-MM-DD'), --현재날짜 /
+TO_CHAR(SYSDATE, 'YYYY-MM-DD'), --현재날짜 -
+TO_CHAR(SYSDATE, 'YYYY'), --현재년도
+TO_CHAR(SYSDATE, 'MM'), --현재 월
+TO_CHAR(SYSDATE, 'DD'), --현재 일
+TO_CHAR(SYSDATE, 'DAY'), --현재 요일
+TO_CHAR(SYSDATE, 'HH24:MI:SS'), --현재시간 포맷 (24시간)
+TO_CHAR(SYSDATE, 'HH:MI:SS') --현재시간 포맷 (12시간)
+FROM
+Premier_League;
+
+---테스트---
+create table test(
+id          number(3),
+name        varchar2(50),
+job         varchar2(50)
 );
 
-INSERT INTO Premier_League VALUES(1, SKT, '페이커', '미드', 10, 2020 );
+INSERT INTO test(name, job)
+VALUES('calros', 'PMC');
+select * from test;
 
-drop table e_sports;
+---게시판 만들기 연습----
+CREATE TABLE Gamer_Reddit
+(
+글번호                number(10),
+닉네임                varchar2(100) NOT NULL, 
+제목                  varchar2(300),
+내용                  varchar2(500) NOT NULL,
+추천                  number(4) DEFAULT 0,
+비추천                number(4) DEFAULT 0,
+작성일                date
+);
 
-desc e_sports;
+
+--테이블 드랍
+DROP TABLE Gamer_Reddit;
+--테이블 요소 출력
+DESC Gamer_Reddit;
+--테이블 내용 출력
+select * from Gamer_Reddit;
+
+
+--게시글 종합 내용 입력--
+INSERT INTO Gamer_Reddit VALUES(
+--글 번호--
+1                       ,
+--닉네임--
+'불리조드'               ,
+--제목--
+'나는 깨끗하다'          ,
+--내용--
+'나는 무죄다 진짜다'      ,
+--추천--
+2                       ,
+--비추천--
+22                      ,
+--작성일--
+sysdate
+);
+
+-- 원하는 글 내용 검색 --
+select * from Gamer_Reddit where 내용 = '닌텐도';
+select * from Gamer_Reddit where 이름 like '%도%';
+--내용 수정--
+UPDATE Gamer_Reddit SET 제목 = '' where 글번호 = 1; 
+
+--추천 비추천 조회수 카운트 +1--
+update Gamer_Reddit 
+SET 비추천 = 비추천 + 1
+WHERE 글번호 = 1;
+
+--댓글 달기--
+INSERT INTO Gamer_Reddit(글번호,닉네임,내용)
+VALUES(1,'닌텐', '응 아니야');
+
+--회원 정보 join ---
+create table info
+(
+mail    varchar2(100),
+age     number(2)
+);
+create table info2
+(
+abr    varchar2(100),
+phon     number(10)
+);
+select * from info;   
+DROP TABLE info;
+
+INSERT INTO info VALUES(
+'불리조드',
+25
+);
+INSERT INTO info2 VALUES(
+'불리조드',
+25
+);
+
+--group by----
+SELECT AVG(SAL) FROM EMP WHERE DEPTNO = 10;
+UNION ALL
+SELECT AVG(SAL) FROM EMP WHERE DEPTNO = 20;
+UNION ALL
+SELECT AVG(SAL) FROM EMP WHERE DEPTNO = 30;
+
+SELECT AVG(SAL), DEPTNO
+FROM EMP
+GROUP BY DEPTNO;select * from test;
+
+HAVING AVG(SAL) >= 2000
 
 commit;
