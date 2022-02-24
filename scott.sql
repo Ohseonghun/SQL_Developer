@@ -96,6 +96,13 @@ select 번호,이름,trunc(weeklywage/7) 주급 from Premier_League;
 select  ID, 번호, 이름, round(weeklywage/7) "주급", weeklywage as "월급"
 from Premier_League where YearlySalary >= 50000 and round(weeklywage/7) >= 900;
 
+
+--원하는 정수 카운트--
+update Gamer_Reddit 
+SET 득점 = 득점 + 1
+WHERE 번호 = 1;
+
+
 --문제 부상인 선수와 아닌 선수 출력하기--
 
 --부상 칼럼 추가(date형으로 잘못 선언, 실수)
@@ -112,30 +119,21 @@ select * from Premier_League where 부상여부= 'y';
 --부상여부  Y or N 으로 출력
 select 번호,이름,nvl(부상여부,'n') from Premier_League;
 
+-- 특정 텍스트로 출력--
 select * from Premier_League; where 이름 like '%손%'		
 union		
 select * from Premier_League; where 이름 like '%로%';	
 
+
+--시간--
 select sysdate from dual;
 select to_char(sysdate,'YYYY/MM/DD HH24:MI:SS') from dual;
 -- MSSQL 디폴트 값 추가방법
 --ALTER TABLE [테이블명] ADD CONSTRAINT [제약조건명] DEFAULT [값] FOR [컬럼명];
 
-select 
-sum (weeklywage), -- 지정한 열의 갑을 모두 더함
-count (weeklywage), --항목의 데이터 개수를 출력
-max (weeklywage), --행의 항목들 중 최대값 출력
-min (weeklywage), --행의 항목들 중 최소값 출력
-avg (weeklywage) --행의 평균 값을 출력
-from Premier_League;
-
-
-select sum (weeklywage) from Premier_League where 포지션 '공격수';
-
 
 
 -- 중복 제거--
-
 select 
 sum(distinct weeklywage), 
 count(distinct weeklywage), 
@@ -159,16 +157,327 @@ TO_CHAR(SYSDATE, 'HH:MI:SS') --현재시간 포맷 (12시간)
 FROM
 Premier_League;
 
----테스트---
-create table test(
-id          number(3),
+
+
+
+
+
+---다중 수행 함수---
+create table Member(
+id          number(3) PRIMARY KEY,
 name        varchar2(50),
 job         varchar2(50)
 );
 
-INSERT INTO test(name, job)
-VALUES('calros', 'PMC');
-select * from test;
+create table Member_Pay(
+name           varchar(50),
+money          number(10),
+pay            number(10)
+);
+
+DROP TABLE member;
+INSERT INTO member VALUES(7,'tota','SCAV');
+INSERT INTO member_pay VALUES('jack',700);
+
+SELECT *FROM member;
+SELECT *FROM member_pay;
+SELECT *FROM member,member_pay;
+SELECT *FROM member,member_pay;
+WHERE member.name = member_pay.name;
+SELECT member.name,member_pay.name FROM member,member_pay WHERE member.name = member_pay.name;
+;
+
+
+
+
+
+
+
+
+------- 다중 수행 함수 -------
+create table Market (
+name            varchar2(100),
+category        varchar2(100),
+price           number(5)
+);
+Select * From Market;
+Insert Into Market Values('프링글스', '과자', 2000);
+
+----1. 행의 원하는 값을 산출----
+select 
+sum (pay), -- 지정한 열의 갑을 모두 더함
+count (pay), --항목의 데이터 개수를 출력
+max (pay), --행의 항목들 중 최대값 출력
+min (pay), --행의 항목들 중 최소값 출력
+avg (pay) --행의 평균 값을 출력
+from Member_Pay
+;
+select sum(price) from Market;
+
+
+----Group By----
+SELECT [조회할 테이블 열] [여러개]....
+FROM [조회 할 테이블]
+Where [조회 할 행을 선별하는 조건식]
+ORDER BY [정렬하려는 열 지정];
+
+--GB를 사용하여 평균 가격 출력--
+SELECT avg(price),category
+From Market
+Group By category;
+
+--카테고리별 평균 가격으로 정렬 하기--
+Select name, category, avg(price)
+From Market
+Group By category, name
+Order By category, name ;
+
+--GB에 조건을 줄떄 사용하는 HAVING절--
+--가격이 1500원 이상의 제품 정렬해서 출력
+SELECT name, category, avg(price)
+    From Market
+Group By category, name
+    Having avg(price) >= 1500
+Order By category, name;
+
+--ROLLUP, CUBE, GROUPING SET 함수--
+--ROLLUP을 사용하여 그룹 대상으로 한 정보 조회
+SELECT name, category, avg(price), min(price), max(price) 
+    From Market
+Group By Rollup(category, name);
+
+--CUBE를 사용하여 열 전체를 대상으로 한 정보 조회
+SELECT name, category, avg(price), min(price), max(price) 
+    From Market
+Group By CUBE(category, name)
+Order By category, name;
+
+--GROUPING SETS으로 열별로 그룹 묶어 출력 하기
+SELECT name, category, count(price) 
+    From Market
+Group By GROUPING SETS(category, name)
+Order By category, name;
+
+--GROUPING ID, 특정 열이 그룹화 되었는지 확인하는 함수
+SELECT name, category, count(price), sum(price) 
+    GROUPING (category)
+    GROUPING (name)
+From Market
+Group By CUBE(category, name)
+Order By category, name;
+
+-----서브 쿼리------
+
+
+
+
+
+
+---JOIN 조인--
+create table Market (
+name            varchar2(100),
+category        varchar2(100),
+price           number(5)
+);
+
+CREATE TABLE Market2 (
+name            varchar2(100),
+company         varchar2(100),
+Performance     number(5)
+);
+Select * From Market,Market2;
+Insert Into Market2 Values('생수', '삼다수', 5649);
+DELETE Market WHERE category = '오리온';
+
+
+--from절에 여러 테이블 선언하기--
+--from절에 명시한 각 테이블을 구성하는 행이 모든 경우의 수로 조합되어 출력
+SELECT *
+FROM Market, Market2
+ORDER BY category;
+
+--이너 조인--
+--이너조인은 위와 같이 우리가 조인하고자 하는 두개의 테이블에서 공통된 요소들을 통해 결합하는 조인방식입니다.
+SELECT Market.name, Market2.name
+FROM Market
+JOIN Market2 
+ON Market.name, Market2.name;
+
+
+CREATE TABLE T1( NO NUMBER(1) );	
+INSERT INTO T1 VALUES(1);	
+INSERT INTO T1 VALUES(2);	
+CREATE TABLE T2( NO NUMBER(1), ID CHAR(1) );	
+INSERT INTO T2 VALUES(1,'A');	
+INSERT INTO T2 VALUES(2,'B');	
+INSERT INTO T2 VALUES(3,'C');	
+
+SELECT * FROM T1,T2;	
+
+SELECT * FROM T1,T2 
+WHERE T1.NO = T2.NO;	
+
+SELECT no,id FROM T1,T2 WHERE T1.NO = T2.NO; -- 에러. 이유: no 열이 어떤 테이블의 열인지 모르기때문(t1에도 no열이 있고, t2에도 no열이 있어서)	
+SELECT t1.no,t2.id FROM T1,T2 WHERE T1.NO = T2.NO; -- 열 이름이 겹치는 경우 테이블명.열이름 으로 표시해야함.	
+
+select * from emp;
+select * from dept;
+select * from emp, dept;
+select * from emp, dept where emp.deptno=dept.deptno;
+select * from emp, dept where emp.deptno=dept.deptno order by emp.deptno;
+select * from emp e, dept d where e.deptno=d.deptno;    --p.219 별칭 설정
+select empno,ename,job,mgr,e.deptno,dname,loc from emp e, dept d where e.deptno=d.deptno;
+
+
+
+
+
+
+
+
+---------------서브 쿼리--------------
+--1. 서브쿼리는 쿼리를 구조화시키므로, 쿼리의 각 부분을 명확히 구분할 수 있게 해줍니다.
+--2. 서브쿼리는 복잡한 JOIN이나 UNION과 같은 동작을 수행할 수 있는 또 다른 방법을 제공합니다.
+--3. 서브쿼리는 복잡한 JOIN이나 UNION 보다 좀 더 읽기 편합니다.
+
+-- 단일행 서브쿼리 --
+select * 
+From EMP
+    WHERE SAL > (SELECT SAL
+                From EMP
+                Where ENAME = 'jones');
+
+--단일행 서브 쿼리에서 함수 사용--
+SELECT E.EMPNO, E.ENAME, E.JOB, E.SLA,
+        D.DEPTNO, D.DNAME, D.LOC
+        FROM EMP E, DEPT D
+WHERE E.DEPTNO = D.DEPTNO
+    AND E.DEPTNO = D.DEPTNO
+    AND E.SAL >(SELECT AVG(SAL) 
+                FROM EMP)
+
+--IN 연산자를 이용한 다중행 서브쿼리--
+--부서 번호가 20이거나 30인 사원 정보만 출력
+SELECT *
+    FROM EMP
+WHERE DEPTNO IN (20, 30);
+
+--각 부서별 최고 그여와 동일한 급여를 받는 사람 출력
+SELECT *
+    FROM EMP
+WHERE DEPTNO IN (SELECT MAX(SAL)
+                    FROM EMP
+                    GROUP BY DEPTNO);
+
+--ANY연산자 사용--
+SELECT *
+    FROM EMP
+WHERE DEPTNO ANY (SELECT MAX(SAL)
+                    FROM EMP
+                    GROUP BY DEPTNO);
+
+
+--SELECT 절 서브 쿼리 (스칼라 서브쿼리)--
+--SELECT 절 안에 서브쿼리가 들어있다.이 때, 서브쿼리의 결과는 반드시 단일 행이나 
+--SUM, COUNT 등의 집계 함수를 거친 단일 값으로 리턴되어야 한다.
+
+SELECT 학생이름,
+       (  SELECT 학과.학과이름
+            FROM 학과
+           WHERE 학과.학과ID = 학생.학생ID ) AS 학과이름
+  FROM 학생
+ WHERE 학생이름 = '홍길동' ;
+
+
+--from절 서브 쿼리(인라인뷰 서브쿼리)--
+--FROM 절 안에 서브쿼리가 들어있다. 이 때, 서브쿼리의 결과는 반드시 하나의 테이블로 리턴되어야 한다.
+--이유는 서브쿼리를 끝마친 테이블 하나를 메인쿼리의 FROM 에서 테이블로 잡기 때문.
+
+SELECT 학생이름, 수학점수
+  FROM ( SELECT 학생.학생이름 AS 학생이름,
+                과목.과목점수 AS 수학점수
+           FROM 학생, 과목
+          WHERE 학생.학생이름 = 과목.학생이름
+            AND  과목.과목이름 = '수학' ) ;
+
+
+--WHERE절 서브쿼리 (중첩 서브쿼리)
+--WHERE 절 안에 서브쿼리가 들어있다. 가장 자주 쓰이는 대중적인 서브쿼리이며 단일행과 복수행 둘 다 리턴이 가능하다.
+
+ELECT *
+  FROM 학생
+ WHERE 학생.학생이름 IN ( SELECT 과목.학생이름 FROM 과목 WHERE 과목.과목이름 = '수학' ) ;
+
+
+
+--단일행 서브쿼리--
+-- 서브쿼리의 수행결과가 오직 하나의 ROW(행)만을 반환.
+-- 이 하나의 결과를 가지고 메인쿼리는 비교연산자를 통해 쿼리를 수행함.
+-- 비교연산자는 단일행 비교연산자를 사용 ( >, >=, <, <=, =, ... ).
+
+-- ex ) 사원들의 평균 급여보다 더 많은 급여를 받는 사원을 검색
+SELECT  ENAME, SAL
+  FROM  EMP
+ WHERE  SAL > ( SELECT  AVG(SAL)
+                  FROM  EMP);
+
+
+---다중행 서브쿼리---
+-- 서브쿼리의 수행결과가 두 건 이상의 데이터를 반환.
+-- 비교연산자는 다중행 비교연산자를 사용 ( IN, ANY, SOME, ALL, EXISTS ).
+
+-- ex ) 30번 소속 사원들 중 급여를 가장 많이 받는 사원보다 더 많은 급여를 받는 사람의 이름과 급여를 출력
+SELECT  ENAME, SAL
+  FROM  EMP
+ WHERE  SAL > ALL ( SELECT  SAL
+                      FROM  EMP
+                     WHERE  DEPTNO = 30 );
+
+
+
+
+
+CREATE TABLE T1( NO NUMBER(1) );	
+INSERT INTO T1 VALUES(1);	
+INSERT INTO T1 VALUES(2);	
+CREATE TABLE T2( NO NUMBER(1), ID CHAR(1) );	
+INSERT INTO T2 VALUES(1,'A');	
+INSERT INTO T2 VALUES(2,'B');	
+INSERT INTO T2 VALUES(3,'C');	
+SELECT * FROM T1,T2;	
+SELECT * FROM T1,T2 WHERE T1.NO = T2.NO;	
+SELECT no,id FROM T1,T2 WHERE T1.NO = T2.NO; -- 에러. 이유: no 열이 어떤 테이블의 열인지 모르기때문(t1에도 no열이 있고, t2에도 no열이 있어서)	
+SELECT t1.no,t2.id FROM T1,T2 WHERE T1.NO = T2.NO; -- 열 이름이 겹치는 경우 테이블명.열이름 으로 표시해야함.	
+
+
+
+drop table t2;
+CREATE TABLE T1( NO NUMBER(1), animal varchar2(20) );		
+INSERT INTO T1 VALUES(1,'개');		
+INSERT INTO T1 VALUES(2,'고양이');		
+CREATE TABLE T2( NO NUMBER(1) );		
+INSERT INTO T2 VALUES(1);		
+INSERT INTO T2 VALUES(2);		
+SELECT * FROM T1;		
+SELECT * FROM T2;		
+SELECT COUNT(*) FROM T2; -- 2
+SELECT * FROM T1 WHERE NO = (SELECT COUNT(*) FROM T2);		
+SELECT * FROM T1 WHERE NO = 2;	
+
+select * from emp;
+--1
+select sal from emp where ename='JONES';
+--2
+select * from emp where sal > 2975;
+
+-- 1+2(서브쿼리)
+select * from emp where sal > 
+    (select sal from emp where ename='JONES');
+
+
+
+
+
 
 ---게시판 만들기 연습----
 CREATE TABLE Gamer_Reddit
